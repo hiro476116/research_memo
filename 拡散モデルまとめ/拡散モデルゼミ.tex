@@ -1,0 +1,568 @@
+\documentclass[dvipdfmx,11pt]{beamer}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\setbeamertemplate{proof begin}{\noindent\textbf{証明}\quad}
+\setbeamertemplate{proof end}{\qed \par}
+\setbeamertemplate{bibliography item}[text]
+
+\theoremstyle{plain}
+\newtheorem{thm}{定理}
+\newtheorem*{thm*}{定理}
+\newtheorem{cor}{系}
+\newtheorem{lem}{補題}
+\newtheorem{assumption}{仮定}
+
+\theoremstyle{定義}
+\newtheorem{dfn}{定義}
+\def\qedsymbol{}
+% ------------------------------
+%  pLaTeX で日本語を扱う設定例
+% ------------------------------
+% ソースが UTF-8 の場合
+\usepackage[utf8]{inputenc}
+% 日本語用（babel）
+\usepackage[japanese]{babel}
+% hyperref で日本語 PDF しおり等が化けないように
+
+% 数式や画像，色の設定
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% ------------------------------
+% Beamer のテーマや色の設定
+% ------------------------------
+\usetheme{Madrid}       % お好みのテーマに変更可能
+\usecolortheme{beaver}  % 赤系配色の例
+
+% スライド下部にページ番号を表示したい場合
+\setbeamertemplate{footline}[frame number]
+% ナビゲーションアイコンを消す場合
+\setbeamertemplate{navigation symbols}{}
+
+
+% for hyperref
+\usepackage{pxjahyper}
+\hypersetup{
+	colorlinks=true, % リンクに色をつけない設定
+	bookmarks=true, % 以下ブックマークに関する設定
+	bookmarksnumbered=true,
+	pdfborder={0 0 0},
+	bookmarkstype=toc
+}
+
+% ------------------------------
+% タイトル情報
+% ------------------------------
+%1
+\title{拡散モデルの概要と収束解析}
+%\subtitle{}
+\author{枇榔 一真}
+\institute{関根$\cdot$ 深澤 $\cdot$ 矢野 研究室}
+\date{2026年1月19日}
+
+% ------------------------------
+\begin{document}
+
+% ---- タイトルスライド ----
+\begin{frame}
+  \titlepage
+\end{frame}
+ %2
+  \begin{frame}{目次}
+    \begin{itemize}
+      \item 拡散モデルの目的
+      \item time reversal formula
+      \item 拡散モデルのアルゴリズム
+      \item 収束解析概要
+      \item 収束解析(Total Variation)
+      \item 収束解析(2-Wasserstein distance)
+      \item デノイジングスコアマッチング
+    \end{itemize}
+  \end{frame}
+  \begin{frame}{拡散モデルの目的}
+    \begin{itemize}
+      \item 画像などのデータ$\{x_1,\cdots, x_n\}\subset \mathbb{R}^d$ が与えられており, このデータはそれぞれある未知の確率測度$P_{data}$に従ってサンプリングされたものとして考える.
+      \item 拡散モデルの目的は, 自分たちの手で未知の確率測度$P_{data}$に従う新たなデータを生み出すことである.
+      \item 統計学では最尤推定などで$P_{data}$を近似することなどが考えられるが, ここではSDEをうまく使い, $P_{data}$ そのものを近似することなく$P_{data}$からのサンプリングだけを得ようという発想である.
+    \end{itemize}
+  
+  \end{frame}
+  %-----------3-------------
+  \begin{frame}{time reversal formula}
+    $f,g$はリプシッツ連続であると仮定し, 
+    \begin{equation}
+        \left\{ \,
+            \begin{aligned}
+            & dX_t = f(t,X_t)dt+g(t,X_t)dB_t \quad (0\leqq t \leqq T) \\
+            & X_0 \sim P_{data}
+            \end{aligned}
+        \right.
+    \end{equation}
+    を考える.このとき, $f, g$に対する適切な仮定のもと次の定理が成り立つ.
+    \begin{thm}[\cite{anderson82}, \cite{haussmann_pardoux86}]
+      上記のSDEの解$\{X_t\}$が各時刻で密度関数$p_t$をもち, $p_t\in H^{1}$かつ$\sup\limits_{t\in [0,T]}\|p_t\|_{H^{1}}$が有界であるとき, $a(t,x):=g(t,x)g(t,x)^\mathsf{T}$として, 
+      \begin{equation}
+        \left\{ \,
+            \begin{aligned}
+            & dY_t = (-f(T-t,Y_t)+a(T-t,Y_t)\nabla \log{p_{T-t}(Y_t)})dt+g(T-t,Y_t)dB_t \quad (0\leqq t \leqq T) \\
+            & Y_0 \stackrel{\mathrm{d}}{=} X_T
+            \end{aligned}
+        \right.
+      \end{equation}
+      の解$\{Y_t\}$と$\{X_t\}$の間に$Y_t\stackrel{\mathrm{d}}{=}X_{T-t}\quad (t\in [0,T])$ という関係が成り立つ.
+    \end{thm}
+  \medskip
+  \end{frame}
+  %------------4-----------
+  \begin{frame}{time reversal formula}
+    \begin{itemize}
+        \item 定理が成立するための仮定は\cite{haussmann_pardoux86}で与えられており, $\partial_t+L$が準楕円型作用素であるか,$\nabla^2 a(t,x)$が一様有界であればよい.
+    \end{itemize}
+  \end{frame}
+
+  %---------5-------------
+  \begin{frame}{time reversal formulaの例(OU過程)}
+    \begin{equation}
+        \left\{ \,
+            \begin{aligned}
+            & dX_t = -X_tdt+\sqrt{2}dB_t \quad (0\leqq t \leqq T) \\
+            & X_0 \sim P_{data}
+            \end{aligned}
+        \right.
+    \end{equation}
+    このとき, 逆向き過程は次のようになる.
+    \begin{equation}
+        \left\{ \,
+            \begin{aligned}
+            & dY_t = (Y_t+\nabla \log{p_{T-t}(Y_t)})dt+\sqrt{2}dB_t \quad (0\leqq t \leqq T) \\
+            & Y_0 \stackrel{\mathrm{d}}{=} X_T
+            \end{aligned}
+        \right.
+    \end{equation}
+  \end{frame}
+
+  \begin{frame}{time reversal formulaの例(Variance Preserving(VP) SDE)}
+    $\beta(t)=\alpha+\frac{t}{T}(\beta-\alpha) \quad (\alpha << \beta)$として, 
+    \begin{equation}
+        \left\{ \,
+            \begin{aligned}
+            & dX_t = -\frac{1}{2}\beta(t)dt+\sqrt{\beta(t)}dB_t \quad (0\leqq t \leqq T) \\
+            & X_0 \sim P_{data}
+            \end{aligned}
+        \right.
+    \end{equation}
+    このとき, 逆向き過程は次のようになる.
+    \begin{equation}
+        \left\{ \,
+            \begin{aligned}
+            & dY_t = (\frac{1}{2}\beta(T-t)Y_t+\beta(T-t)\nabla \log{p_{T-t}(Y_t)})dt+\sqrt{\beta(T-t)}dB_t \quad (0\leqq t \leqq T) \\
+            & Y_0 \stackrel{\mathrm{d}}{=} X_T
+            \end{aligned}
+        \right.
+    \end{equation}
+    これは, 拡散モデルの解説などでよく出てくる
+    \begin{equation}
+        X_i=\sqrt{1-\beta_i}X_{i-1}+\sqrt{\beta_i}Z_i \quad (1\leqq i \leqq N, Z_i\sim N(0,I))
+    \end{equation}
+    を連続時間化したものである.
+  \end{frame}
+  \begin{frame}{拡散モデルのアルゴリズム}
+    次のようにすると, 最初に紹介した拡散モデルの目的である$P_{data}$からのサンプリングが実現できる.
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{\textwidth}
+          \begin{itemize}
+            \item 前向きSDEの初期分布として$P_{data}$を取るようにする.
+            \item 逆向きSDEを走らせることができるのであれば, $X_T$の分布からの乱数を発生させ,
+                  逆向きSDEを走らせることで$P_{data}$に従うデータを無限に得ることが可能になる.
+          \end{itemize}
+        \end{column}
+      \end{columns}
+      \vspace{1mm}
+
+      \begin{center}
+        \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{DDPM.png}
+      \end{center}
+  \end{frame}
+  \begin{frame}{拡散モデルのアルゴリズム}
+    しかし, 現実的には次の3つの問題が生じる.
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{\textwidth}
+          \begin{itemize}
+            \item $X_T$の分布が未知なので$X_T$の分布からの乱数を発生させることができない
+            \item スコア関数$\nabla \log{p_{t}(x)}$が未知なので, 逆向きSDEを走らせることができない.
+            \item SDEを走らせる際に離散化の処理が必要になるため, 得られる分布に誤差が生じる
+          \end{itemize}
+        \end{column}
+      \end{columns}
+      \vspace{0mm}
+
+      \begin{center}
+        \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{DDPM.png}
+      \end{center}
+  \end{frame}
+  \begin{frame}{拡散モデルのアルゴリズム}
+    1つ目の問題点「$X_T$の分布が未知なので$X_T$の分布からの乱数を発生させることができない」に対しては, 次のような解決策がある
+    \begin{itemize}
+        \item time reversal formulaの例で紹介した2つのSDE(OU, VP SDE)はともに定常分布として$N(0,I)$をもつため, 最終時刻$T$を十分大きくとれば$\mathcal{L}(X_T)\thickapprox N(0,I)$となることが期待できる
+        \item なので, 初期分布を$N(0,I)$で代替して逆向きSDEを走らせる.
+    \end{itemize}
+  \end{frame}
+  \begin{frame}{拡散モデルのアルゴリズム}
+    2つ目の問題点「スコア関数$\nabla \log{p_{t}(x)}$が未知なので, 逆向きSDEを走らせることができない.」に対しては, 次のような解決策がある
+    \begin{itemize}
+        \item 真のスコア関数を得ることはできないので, ニューラルネットワーク$s_\theta(t,x)$で$\nabla \log{p_{t}(x)}$を近似する.
+        \item スコア関数の部分を, 近似したニューラルネットワークに代替して逆向きSDEを走らせる.
+        \item $s_\theta(t,x)$を学習する方法として, デノイジングスコアマッチングという方法が知られており, $\int_{0}^{T}E[(s_{\theta}(t,X_t)-\nabla \log{p(t,X_t)})^2]$を小さくするように学習する.
+    \end{itemize}
+  \end{frame}
+  \begin{frame}{拡散モデルのアルゴリズム}
+    \begin{itemize}
+        \item 3つ目の問題点「SDEを走らせる際に離散化の処理が必要になるため, 得られる分布に誤差が生じる.」という問題では離散化誤差の評価を行うことになるが, 計算が煩雑になるので今回は考えないことにする.
+        \item スコア関数, 初期分布を代替し, 離散化して得られた逆向きSDEを走らせた場合, 実際にどの程度$P_{data}$に近い分布が得られるのかを解析する研究が多く存在する.
+    \end{itemize}
+  \end{frame}
+  \begin{frame}{収束解析概要}
+    以下では, 議論を見やすくするために前向き過程はOU過程として考える.
+    真の逆向きSDE
+    \begin{equation}
+        \left\{ \,
+            \begin{aligned}
+            & dY_t = (Y_t+\nabla \log{p_{T-t}(Y_t)})dt+\sqrt{2}dB_t \quad (0\leqq t \leqq T) \\
+            & Y_0 \stackrel{\mathrm{d}}{=} X_T
+            \end{aligned}
+        \right.
+    \end{equation}
+    に対して, スコア関数と初期分布を置き換えた
+    \begin{equation}
+        \left\{ \,
+            \begin{aligned}
+            & dY^{\prime}_t = (Y^{\prime}_t+s_{\theta}(T-t,Y^{\prime}_t))dt+\sqrt{2}dB_t \quad (0\leqq t \leqq T) \\
+            & Y^{\prime}_0 \stackrel{\mathrm{d}}{=} N(0,I)
+            \end{aligned}
+        \right.
+    \end{equation}
+    を考え, 2つの確率分布$\mathcal{L}(Y_T)$と$\mathcal{L}(Y^{\prime}_T)$を比較する.
+    先行研究での比較方法は主に次の2通りに分類される.
+    \begin{enumerate}
+        \item Total Variance distance, KL divergence
+        \item 2-Wasserstein dstance
+    \end{enumerate}
+  \end{frame}
+  \begin{frame}{収束解析(Total Variation)}
+    \begin{definition}
+      可測空間$(\Omega,\mathcal{F})$上の確率測度$P,Q$のTotal Variation distance $d_{TV}(P,Q)$を, 次のように定義する.
+      \begin{equation*}
+        d_{TV}(P,Q)=\sup_{A\in \mathcal{F}}{|P(A)-Q(A)|}
+      \end{equation*}
+    \end{definition}
+    \begin{definition}
+      可測空間$(\Omega,\mathcal{F})$上の確率測度$P,Q(P<<Q)$のKL divergence $D_{KL}(P|Q)$を, 次のように定義する.
+      \begin{equation*}
+        D_{KL}(P|Q)=E_P[\log{\frac{dP}{dQ}}]
+      \end{equation*}
+    \end{definition}
+    \begin{itemize}
+      \item Total Variation distanceは距離の公理を満たすが, KL divergenceは満たさない.
+    \end{itemize}
+  \end{frame}
+  \begin{frame}{収束解析(Total Variation)}
+    \begin{theorem}[Pinskerの不等式]
+      任意の確率測度の$P,Q$に関して, 次の関係が成立する.
+      \begin{equation*}
+        d_{TV}(P,Q)\leqq \sqrt{\frac{1}{2}D_{KL}(P|Q)}
+      \end{equation*}
+    \end{theorem}
+    \begin{itemize}
+      \item Pinskerの不等式を使って, KL divergenceで評価したものをTVでの評価に置き換えられる.
+      \item 先行研究はTV,KLでの評価をしたものが多く, 体感では20-30くらい論文がある.(もっとあるかもしれない)
+    \end{itemize}
+  \end{frame}
+  \begin{frame}{収束解析(Total Variation)}
+    \begin{itemize}
+      \item 2022年の論文\cite{chen_et_al_2023}以前は, $P_{data}$に対数凸性を課したり, log-sobolev不等式が成立することを仮定したりなど, データ分布へ重ための仮定を課した解析などしか無かった.
+      \item \cite{chen_et_al_2023}では, 比較的自然？な次の3つの仮定のもと解析をしている.
+    \end{itemize}
+    \begin{assumption}
+      \begin{enumerate}
+        \item $\nabla \log{p_t}$はL-リプシッツ連続  ($L>0, t\in [0,T]$)
+        \item $\int_{\mathbb{R}^d}|x|^2dP_{data}(x)<\infty$
+        \item $E[|s_\theta(t,X_t)-\nabla\log{p_t(t,X_t)}|^2]<\epsilon^2 \quad (\forall t\in [0,T])$
+      \end{enumerate}
+    \end{assumption}
+  \end{frame}
+
+  \begin{frame}{収束解析(Total Variation)}
+    \begin{assumption}
+      \begin{enumerate}
+        \item $\nabla \log{p_t}$はL-リプシッツ連続  ($L>0, t\in [0,T]$)
+        \item $\int_{\mathbb{R}^d}|x|^2dP_{data}(x)<\infty$
+        \item $E[|s_\theta(t,X_t)-\nabla\log{p_t(t,X_t)}|^2]<\epsilon^2 \quad (\forall t\in [0,T])$
+      \end{enumerate}
+    \end{assumption}
+    上の仮定のもと, 次が成り立つ.
+    \begin{thm}[\cite{chen_et_al_2023}]
+      $d_{TV}(P_{data},\mathcal{L}(Y^{\prime}_T))\leqq \sqrt{KL(P_{data}|\mu)}e^{-T}+\epsilon \sqrt{\frac{T}{2}}$
+    \end{thm}
+  \end{frame}
+  \begin{frame}{収束解析(Total Variation)}
+    \begin{proof}
+      真の逆向きSDE
+      \begin{equation}
+          \left\{ \,
+              \begin{aligned}
+              & dY_t = (Y_t+\nabla \log{p_{T-t}(Y_t)})dt+\sqrt{2}dB_t \quad (0\leqq t \leqq T) \\
+              & Y_0 \stackrel{\mathrm{d}}{=} X_T
+              \end{aligned}
+          \right.
+      \end{equation}
+      に対し, 加えてスコア関数だけを置き換えたSDEを
+      \begin{equation}
+        \left\{ \,
+            \begin{aligned}
+            & dY^{score}_t = (Y^{score}_t+s_{\theta}(T-t,Y^{score}_t))dt+\sqrt{2}dB_t \quad (0\leqq t \leqq T) \\
+            & Y^{score}_0 \stackrel{\mathrm{d}}{=} X_T
+            \end{aligned}
+        \right.
+      \end{equation}
+      に対して, スコア関数と初期分布を置き換えたSDEを
+      \begin{equation}
+          \left\{ \,
+              \begin{aligned}
+              & dY^{\prime}_t = (Y^{\prime}_t+s_{\theta}(T-t,Y^{\prime}_t))dt+\sqrt{2}dB_t \quad (0\leqq t \leqq T) \\
+              & Y^{\prime}_0 \stackrel{\mathrm{d}}{=} N(0,I)
+              \end{aligned}
+          \right.
+      \end{equation}
+      とする.
+    \end{proof}
+  \end{frame}
+  \begin{frame}{収束解析(Total Variation)}
+    このとき, $d_{TV}$は距離なので次のように変形できる.
+    \begin{align*}
+      d_{TV}(P_{data},\mathcal{L}(Y^{\prime}_T))&=d_{TV}(\mathcal{L}(Y_T),\mathcal{L}(Y^{\prime}_T))\\
+      &\leqq d_{TV}(\mathcal{L}(Y_T),\mathcal{L}(Y^{score}_T))+d_{TV}(\mathcal{L}(Y^{score}_T),\mathcal{L}(Y^{\prime}_T))
+    \end{align*}
+    よって, $d_{TV}(\mathcal{L}(Y_T),\mathcal{L}(Y^{score}_T))$と$d_{TV}(\mathcal{L}(Y^{score}_T),\mathcal{L}(Y^{\prime}_T))$をそれぞれ評価すればよい.
+  \end{frame}
+  \begin{frame}{収束解析(Total Variation)}
+    まず $d_{TV}(\mathcal{L}(Y^{score}_T),\mathcal{L}(Y^{\prime}_T))$の評価を行うが, ここでは次の不等式が適用できる.
+    \begin{theorem}[データ処理不等式]
+      $Q$をtransition kernelとし, $\mu, \nu$をそれぞれ確率測度とし, $\mu Q(A)=\int Q(x,A)\mu(dx)$としたとき, 次の不等式が成立する.
+      \begin{equation*}
+        d_{TV}(\mu Q,\nu Q)\leqq d_{TV}(\mu,\nu)
+      \end{equation*}
+    \end{theorem}
+    今, $Y^{\prime}$と$Y^{score}$はともに共通の遷移核をもつマルコフ過程なので, 遷移格を$\{P_{s,t}\}_{s,t_\in [0,T], s<t}$とすると, 
+    $\mu$を標準正規分布に従う確率測度として, $\mathcal{L}(Y^{score}_t)=\mathcal{L}(X_T) P_{0,t}, \mathcal{L}(Y^{\prime}_t)=\mu  P_{0,t}$とかける.よって
+    \begin{equation*}
+      d_{TV}(\mathcal{L}(Y^{score}_T),\mathcal{L}(Y^{\prime}_T))=d_{TV}(\mathcal{L}(X_T)  P_{0,T},\mu  P_{0,T})\leqq d_{TV}(\mathcal{L}(X_T),\mu)
+    \end{equation*}
+  \end{frame}
+  \begin{frame}{収束解析(Total Variation)}
+    ここで, $X$の定常分布が$\mu$であることと, Pinskerの不等式などを使うと
+    \begin{equation*}
+      d_{TV}(\mathcal{L}(Y_T),\mathcal{L}(Y^{score}_T))\leqq  d_{TV}(\mathcal{L}(X_T),\mu)\leqq \sqrt{KL(P_{data}|\mu)}e^{-T}
+    \end{equation*}
+    となることがわかる.\cite{D_Bakry}
+  \end{frame}
+  \begin{frame}{収束解析(Total Variation)}
+    次に, $d_{TV}(\mathcal{L}(Y_T),\mathcal{L}(Y^{score}_T))$を評価する.
+    $P$を$Y$の経路分布, $Q$を$Y^{score}$の経路分布とする.つまり, $P,Q$は$(C([0,T]),\mathcal{B}(C([0,T])))$上の確率測度とする.
+    また, $K(\omega,A)=1_A(\omega(T))$とすると, $K$はtransition kernelになり, 
+    $\mathcal{L}(Y_T)=PK, \mathcal{L}(Y^{score}_T)=QK$となる.
+    よってデータ処理不等式より,
+    \begin{equation*}
+      d_{TV}(\mathcal{L}(Y_T),\mathcal{L}(Y^{score}_T))=d_{TV}(PK,QK)\leqq d_{TV}(P,Q)
+    \end{equation*}
+    となるので, $d_{TV}(P,Q)$をを評価すればよいことがわかる.
+    また, Pinskerの不等式より
+    \begin{equation*}
+      d_{TV}(P,Q)\leqq \sqrt{\frac{1}{2}KL(P|Q)}
+    \end{equation*}
+    となるので, $KL(P|Q)$が評価できればよい.
+  \end{frame}
+
+  \begin{frame}{収束解析(Total Variation)}
+    ここで, ギルザノフの定理より, 
+    \begin{align*}
+      KL(P|Q)&=E_P[\log{\frac{dP}{dQ}}]\\
+      &=E[\int_{0}^{T}|s_\theta(t,Y_t)-\nabla\log{p_t(Y_t)}|^2dt]\\
+      &=\epsilon^2 T
+    \end{align*}
+    となる.よって
+    \begin{equation*}
+      d_{TV}(P,Q)\leqq \epsilon\sqrt{\frac{T}{2}}
+    \end{equation*}
+    となる.
+  \end{frame}
+
+
+
+
+
+
+
+
+
+
+  \begin{frame}{収束解析(2-Wasserstein distance)}
+    \begin{definition}
+      $\mathbb{R}^d$上の確率測度$P,Q$に対して, $\Pi(P,Q)=\{\pi\text{:}\mathbb{R}^d\times\mathbb{R}^d\text{上の確率測度}|\pi(\cdot,\mathbb{R}^d)=P,\pi(\mathbb{R}^d,\cdot)=Q\}$とする.
+      このとき, $P,Q$の2-Wasserstein distance $W_2(P,Q)$を次のように定義する
+      \begin{equation*}
+        W_2(P,Q)=\inf_{\pi\in\Pi}\int_{\mathbb{R}^d\times\mathbb{R}^d}|x-y|^2d\pi(x,y)
+      \end{equation*}
+    \end{definition}
+    \begin{itemize}
+      \item TV,KLでの解析を行なった論文が多くあるのに対し, 2-Wasserstein distanceでの解析をしている論文は比較的少ない。(自分が見つけているものだと4本)
+      \item しかし, Wasserstein distanceの方が画像の類似性に関する人間の判断と合致しており, Fréchet Inception Distance(FID)と呼ばれる画像品質の評価指標もWasserstein distanceに基づいているため, この距離での解析結果も求められている.
+      \item 一方で, 現状ではTV,KLの結果と比べて重い仮定が必要になったり, 収束レートが悪かったりしている.
+    \end{itemize}
+  \end{frame}
+  
+  \begin{frame}{収束解析(2-Wasserstein distance)}
+    \begin{assumption}
+      \begin{enumerate}
+        \item $\nabla \log{p_t}$はL-リプシッツ連続  ($L>0, t\in [0,T]$)
+        \item $\int_{\mathbb{R}^d}|x|^2dP_{data}(x)<\infty$
+        \item $E[|s_\theta(t,X_t)-\nabla\log{p_t(t,X_t)}|^2]<\epsilon^2 \quad (\forall t\in [0,T])$
+      \end{enumerate}
+    \end{assumption}
+    TVでの解析と同様に以下の仮定で解析したいが, 現状は追加の仮定を加えた結果しか証明はされていない.
+    加えられる仮定は, 先行研究では以下のうちのいずれか1つを加えている.
+    \begin{assumption}
+      \begin{enumerate}
+        \item $s_\theta(t,x)$はL-リプシッツ連続  ($L>0, t\in [0,T]$)
+        \item $\|s_\theta(t,X_t)-\nabla\log{p_t(t,X_t)}\|_{\infty}<\epsilon \quad (\forall t\in [0,T])$
+        \item $E[|s_\theta(t,Y^{\prime}_{T-t})-\nabla\log{p_t(t,Y^{\prime}_{T-t})}|^2]<\epsilon^2 \quad (\forall t\in [0,T])$
+      \end{enumerate}
+    \end{assumption}
+    今回は1つ目の追加仮定である$s_\theta(t,x)$はL-リプシッツ連続  ($L>0, t\in [0,T]$)を課した証明を紹介する.
+
+  \end{frame}
+
+  \begin{frame}{収束解析(2-Wasserstein distance)}
+    \begin{theorem}
+      任意の$h>0$に対して, 次の不等式が成立する.
+      \begin{equation*}
+        W_2(P_{data},\mathcal{L}(Y^{\prime}_T))\leqq \sqrt{e^{(2+4h+4L)T}W_2(\mathcal{L}(X_T),N(0,I))+\frac{\epsilon^2}{h}\frac{e^{(2+4h+4L)T}-1}{2+4h+4L}}
+      \end{equation*}
+    \end{theorem}
+
+  \end{frame}
+  \begin{frame}{収束解析(2-Wasserstein distance)}
+    \begin{proof}
+      次の2つのSDEを考える.
+      \[
+        \begin{cases}
+        dU_t = (U_t+2\nabla\log p_{T-t}(U_t))dt+\sqrt2\,dB_t,\\
+        dV_t = (V_t+2s_\theta(T-t,V_t))dt+\sqrt2\,dB_t,
+        \end{cases}
+      \]
+    ここで, $U_0\sim \mathcal{X_T}, V_0\sim N(0,I)$で, $(U_0,V_0)$が$W_2(\mathcal{L}(X_T),N(0,I))$を達成するような分布になるようにする.
+    この時, 
+    \begin{equation*}
+      U_t-V_t=U_0-V_0+\int_{0}^{t}\{U_s-V_s+2(\nabla\log p_{T-s}(U_s)-s_\theta(T-s,V_s))\}ds
+    \end{equation*}
+    となるので, $|U_t-V_t|^2$に伊藤の公式を使うと, 
+    \begin{align*}
+      d|U_t-V_t|^2&=2(U_t-V_t)\{U_t-V_t+2(\nabla\log p_{T-t}(U_t)-s_\theta(T-t,V_t))\}dt\\
+    \end{align*}
+    となる.
+  \end{proof}
+    
+  \end{frame}
+
+  \begin{frame}{収束解析(2-Wasserstein distance)}
+    \begin{proof}
+      よって, 
+      \begin{align*}
+        \frac{dE[|U_t-V_t|^2]}{dt}=&2E[|U_t-V_t|^2]\\
+        &+4E[(U_t-V_t)(\nabla\log p_{T-t}(U_t)-s_\theta(T-t,V_t))]
+      \end{align*}
+    となる.ここで$\nabla\log p_{T-t}(U_t)-s_\theta(T-t,V_t)=\nabla\log p_{T-t}(U_t)-s_\theta(T-t,U_t)+s_\theta(T-t,U_t)-s_\theta(T-t,V_t)$なので, 
+      \begin{align*}
+        \frac{dE[|U_t-V_t|^2]}{dt}=&2E[|U_t-V_t|^2]\\
+        &+4E[(U_t-V_t)(\nabla\log p_{T-t}(U_t)-s_\theta(T-t,U_t))]\\
+        &+4E[(U_t-V_t)(s_\theta(T-t,U_t))-s_\theta(T-t,V_t)]\\
+      \end{align*}
+    \end{proof}
+  \end{frame}
+
+
+  \begin{frame}{収束解析(2-Wasserstein distance)}
+    \begin{proof}
+      ここで, ヤングの不等式より任意の$h>0$に対して, 
+      \begin{align*}
+        &4E[(U_t-V_t)(\nabla\log p_{T-t}(U_t)-s_\theta(T-t,U_t))]\\
+        &\leqq 4hE[|U_t-V_t|^2]+\frac{1}{h}E[|\nabla\log p_{T-t}(U_t)-s_\theta(T-t,U_t)|^2]\\
+        &\leqq 4hE[|U_t-V_t|^2]+\frac{1}{h}\epsilon^2
+      \end{align*}
+      となり, また$S_\theta$のL-リプシッツ連続性より
+      \begin{align*}
+        E[(U_t-V_t)(s_\theta(T-t,U_t))-s_\theta(T-t,V_t)]\leqq LE[|U_t-V_t|^2]
+      \end{align*}
+      となる.
+    \end{proof}
+  \end{frame}
+  \begin{frame}{収束解析(2-Wasserstein distance)}
+    \begin{proof}
+      よって
+      \begin{align*}
+        \frac{dE[|U_t-V_t|^2]}{dt}=&2E[|U_t-V_t|^2]\leqq (2+4h+4L)E[|U_t-V_t|^2]+\frac{4}{h}\epsilon^2
+      \end{align*}
+      となるので, グロンウォールの補題より,
+      \begin{align*}
+        E[|U_T-V_T|^2]\leqq e^{(2+4h+4L)T}E[|U_0-V_0|^2]+\frac{\epsilon^2}{h}\frac{e^{(2+4h+4L)T}-1}{2+4h+4L}
+      \end{align*}
+      となる.
+    \end{proof}
+  \end{frame}
+  \begin{frame}{収束解析(2-Wasserstein distance)}
+    \begin{proof}
+      よって, 
+      \begin{align*}
+        W_2(P_{data},\mathcal{L}(Y^{\prime}_T))&\leqq\sqrt{E[|U_T-V_T|^2]}\\
+        &\leqq \sqrt{e^{(2+4h+4L)T}E[|U_0-V_0|^2]+\frac{\epsilon^2}{h}\frac{e^{(2+4h+4L)T}-1}{2+4h+4L}}\\
+        &=\sqrt{e^{(2+4h+4L)T}W_2(\mathcal{L}(X_T),N(0,I))+\frac{\epsilon^2}{h}\frac{e^{(2+4h+4L)T}-1}{2+4h+4L}}
+      \end{align*}
+      となる.
+    \end{proof}
+  \end{frame}
+
+    \begin{frame}[allowframebreaks]{参考文献}
+    \begin{thebibliography}{99}
+    
+    \bibitem{anderson82}
+    Anderson, B. D. O. (1982).
+    Reverse-time diffusion equation models.
+    Stochastic Process. Appl. 12 313–326.
+    \url{https://mathscinet.ams.org/mathscinet/article?mr=656280}
+    
+    \bibitem{haussmann_pardoux86}
+    Haussmann, U. G. and Pardoux, E. (1986).
+    Time reversal of diffusions.
+    Ann. Probab. 14 1188–1205.
+    \url{https://mathscinet.ams.org/mathscinet/article?mr=866342}
+    
+    \bibitem{tang_zhao_2024}
+    Wenpin Tang and Hanyang Zhao (2024).
+    Score-based Diffusion Models via Stochastic Differential Equations -- a Technical Tutorial.
+    \url{https://arxiv.org/abs/2402.07487}
+    
+    \bibitem{chen_et_al_2023}
+    Chen, S., Chewi, S., Li, J., Li, Y., Salim, A. and Zhang, A. R. (2023).
+    Sampling is as easy as learning the score: theory for diffusion models with minimal data assumptions.
+    \url{https://arxiv.org/abs/2209.11215}
+    \bibitem{borgi_a_2019}
+    Borji, A. (2019). Pros and cons of GAN evaluation measures. Comput.
+    Vis. Image Underst. 179 41–65.
+    \url{https://arxiv.org/abs/1802.03446}
+
+    \bibitem{D_Bakry}
+    D. Bakry, I. Gentil, and M. Ledoux. Analysis and geometry of Markov diffusion operators. Vol. 348. Grundlehren der Mathematischen Wissenschaften [Fundamental Principles of Mathematical Sciences]. Springer, Cham, 2014, pp. xx+552.
+    \url{https://link.springer.com/book/10.1007/978-3-319-00227-9}
+    \end{thebibliography}
+    \end{frame}
+  \end{document}
