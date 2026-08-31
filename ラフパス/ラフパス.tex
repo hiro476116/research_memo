@@ -1,0 +1,674 @@
+% !TeX program = lualatex
+\documentclass[11pt]{article}
+
+\usepackage[haranoaji]{luatexja-preset}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage[authoryear,round]{natbib}
+\setcitestyle{authoryear,open={(},close={)},aysep={ },citesep={; }}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\crefname{assumption}{Assumption}{Assumptions}
+\Crefname{assumption}{Assumption}{Assumptions}
+\crefname{lemma}{Lemma}{Lemmas}
+\Crefname{lemma}{Lemma}{Lemmas}
+\crefname{proposition}{Proposition}{Propositions}
+\Crefname{proposition}{Proposition}{Propositions}
+\crefname{remark}{Remark}{Remarks}
+\Crefname{remark}{Remark}{Remarks}
+\crefname{definition}{Definition}{Definitions}
+\Crefname{definition}{Definition}{Definitions}
+
+\newtheoremstyle{breakstyle}
+  {3pt}        % Space above
+  {3pt}        % Space below
+  {\normalfont}% Body font
+  {}           % Indent amount
+  {\bfseries}  % Head font
+  {.}          % Punctuation after head
+  {\newline}   % Line break after head
+  {}           % Head specification
+
+\theoremstyle{breakstyle}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Pp}{\mathbb{P}}
+\newcommand{\Law}{\mathcal{L}}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\Id}{I_d}
+\newcommand{\pdata}{p_{\mathrm{data}}}
+\newcommand{\Wtwo}{W_2}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert_2}
+\newcommand{\ip}[2]{\left\langle #1,#2\right\rangle}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\TV}{\operatorname{TV}}
+\newcommand{\scoreerr}{\varepsilon_{\mathrm{score}}}
+\newcommand{\dd}{\,\mathrm{d}}
+\newcommand{\lesssimc}{\lesssim}
+
+\title{ラフパス理論}
+\author{枇榔一真}
+
+\begin{document}
+% ===== PDF page map (current 27-page build; approximate) =====
+% Page breaks in this article are automatic, so the markers below may move
+% after substantial edits. Rebuild the PDF when updating this map.
+% ===== PDF p.01 (approx.) | Title / Abstract / Introduction =====
+\maketitle
+
+\begin{abstract}
+\end{abstract}
+\section{Introduction}
+
+\section{Riemann–Stieltjes積分}
+$T>0$ として, $[0,T]$ 上の関数について議論する.
+\begin{definition}
+    連続関数 $g : [0,T]\rightarrow \mathbb{R}$ が\textbf{有界変動}であるとは, ある連続な単調非減少関数
+    $g_1, g_2: [0,T]\rightarrow \mathbb{R}$ が存在して, 
+    \begin{equation*}
+        g=g_1-g_2
+    \end{equation*}
+    となることをいう.
+\end{definition}
+\begin{proposition}
+    $g$ を有界変動とし, $\Pi$ を $[0,T]$ の有限分割全体の集合とする. このとき, 
+    \begin{equation*}
+        \sup\limits_{\pi \in\Pi} \sum_{i=1}^{n}|g(t_i)-g(t_{i-1})|<\infty, \quad (\pi=\{0=t_0<t_1<\cdots<t_n=T\})
+    \end{equation*}
+\end{proposition}
+\begin{proof}
+    Definition 2.1 より, 連続な単調非減少関数 $g_1,g_2$ を用いて
+    $g=g_1-g_2$ と書ける. 任意の分割
+    \begin{equation*}
+        \pi=\{0=t_0<t_1<\cdots<t_n=T\}
+    \end{equation*}
+    に対し, $g_1,g_2$ の単調性から
+    \begin{align*}
+        \sum_{i=1}^n |g(t_i)-g(t_{i-1})|
+        &\leq
+        \sum_{i=1}^n \bigl(g_1(t_i)-g_1(t_{i-1})\bigr)
+        +
+        \sum_{i=1}^n \bigl(g_2(t_i)-g_2(t_{i-1})\bigr) \\
+        &=g_1(T)-g_1(0)+g_2(T)-g_2(0)<\infty.
+    \end{align*}
+    右辺は分割 $\pi$ に依存しないため, すべての有限分割について上限をとれば結論を得る.
+\end{proof}
+
+\begin{definition}
+    $g$ を有界変動とし, $\mu : \mathcal{B}([0,T])\rightarrow \mathbb{R}$ を, 
+    \begin{equation*}
+        \mu([s,t))=g(t)-g(s)\quad (0\leqq s\leqq t\leqq T)
+    \end{equation*}
+    となるような符号付き測度とする. これはDefinition 2.1, Proposition 2.2 からwell-definedである.
+    このとき, $\mu$ に関する積分を, $g$ についてのRiemann–Stieltjes積分と呼ぶ.
+\end{definition}
+\begin{proposition}
+    $\mu, g$ をDefinition 2.3と同様に取る. このとき, $f:[0,T]\rightarrow\mathbb{R}$ が連続関数であれば, $\mu$ に関して可積分である.
+\end{proposition}
+\begin{proof}
+    $f$ はコンパクト集合 $[0,T]$ 上で連続であるから有界であり,
+    \begin{equation*}
+        M:=\max_{t\in[0,T]}|f(t)|<\infty
+    \end{equation*}
+    とおける. $|\mu|$ を $\mu$ の全変動測度とする. Definition 2.3 の
+    Lebesgue--Stieltjes 測度の構成と Proposition 2.2 より,
+    \begin{equation*}
+        |\mu|([0,T])
+        =\sup_{\pi}\sum_{i=1}^n |g(t_i)-g(t_{i-1})|
+        <\infty.
+    \end{equation*}
+    したがって,
+    \begin{equation*}
+        \int_{[0,T]} |f|\,\mathrm{d}|\mu|
+        \leq M|\mu|([0,T])<\infty.
+    \end{equation*}
+    よって $f$ は符号付き測度 $\mu$ に関して可積分である.
+\end{proof}
+
+\section{Young積分}
+本章では, $x: [0,T]\rightarrow \mathbb{R}^d$ を連続関数とする.連続関数全体の空間にsupノルムを入れたBanach空間を $C([0,T],\mathbb{R}^d)$ とかく.また, 
+初期値が $a$ であるような連続関数全体を $C_a([0,T],\mathbb{R}^d)$ とかく.
+また, $x\in C([0,T],\mathbb{R}^d)$ に対して, $1\leqq p<\infty$ としたときのp次変動セミノルムを次のように定義する.
+\begin{equation*}
+    \|x\|_{\text{p-var}}=(\sup_{\pi \in\Pi}\sum_{i=1}^{n}|x_{t_i}-x_{t_{i-1}}|^p)^\frac{1}{p}
+\end{equation*}
+\begin{proposition}
+    \label{prop:pvar-seminorm}
+    $1\leqq p<\infty$ とする. 有限 $p$ 次変動をもつ連続関数全体の空間
+    \begin{equation*}
+        C^{p\text{-var}}([0,T],\mathbb{R}^d)
+        :=\bigl\{x\in C([0,T],\mathbb{R}^d):
+        \|x\|_{\text{p-var}}<\infty\bigr\}
+    \end{equation*}
+    上で, $\|\cdot\|_{\text{p-var}}$ はセミノルムである.
+\end{proposition}
+\begin{proof}
+    非負性 $\|x\|_{\mathrm{p-var}}\geqq0$ は定義から明らかである. また,
+    任意の $\lambda\in\mathbb{R}$ と分割
+    $\pi=\{0=t_0<t_1<\cdots<t_n=T\}$ に対して
+    \begin{equation*}
+        \left(\sum_{i=1}^n
+        |\lambda x_{t_i}-\lambda x_{t_{i-1}}|^p\right)^{1/p}
+        =|\lambda|
+        \left(\sum_{i=1}^n|x_{t_i}-x_{t_{i-1}}|^p\right)^{1/p}
+    \end{equation*}
+    である. 分割について上限をとると,
+    \begin{equation*}
+        \|\lambda x\|_{\mathrm{p-var}}
+        =|\lambda|\,\|x\|_{\mathrm{p-var}}
+    \end{equation*}
+    を得る.
+
+    次に $x,y\in C^{p\text{-var}}([0,T],\mathbb{R}^d)$ とする. 各分割 $\pi$ に対し,
+    Appendix~\ref{app:lp-inequalities} の \Cref{prop:minkowski-lp} で示す
+    $\ell^p$ 空間における Minkowski の不等式より
+    \begin{align*}
+        &\left(\sum_{i=1}^n
+        |(x+y)_{t_i}-(x+y)_{t_{i-1}}|^p\right)^{1/p}\\
+        &\quad\leq
+        \left(\sum_{i=1}^n|x_{t_i}-x_{t_{i-1}}|^p\right)^{1/p}
+        +
+        \left(\sum_{i=1}^n|y_{t_i}-y_{t_{i-1}}|^p\right)^{1/p}\\
+        &\quad\leq
+        \|x\|_{\mathrm{p-var}}+\|y\|_{\mathrm{p-var}}.
+    \end{align*}
+    左辺の分割 $\pi$ について上限をとれば,
+    \begin{equation*}
+        \|x+y\|_{\mathrm{p-var}}
+        \leq \|x\|_{\mathrm{p-var}}+\|y\|_{\mathrm{p-var}}
+    \end{equation*}
+    となる. この不等式から $x+y$ も有限 $p$ 次変動をもつので,
+    $C^{p\text{-var}}([0,T],\mathbb{R}^d)$ は線形空間である. 以上により,
+    $\|\cdot\|_{\mathrm{p-var}}$ はこの空間上のセミノルムである.
+\end{proof}
+連続関数の場合と同様に, 初期値が $a$ であるような.  $C^{p\text{-var}}([0,T],\mathbb{R}^d)$ の元全体を $C_a^{p\text{-var}}([0,T],\mathbb{R}^d)$ とかく.
+$p=1$ のとき, これらの空間は有界変動関数全体の集合になることは明らかである.
+\begin{proposition}
+    \label{prop:pvar-banach}
+    $x\in C^{p\text{-var}}([0,T],\mathbb{R}^d)$ に対して, 
+    \begin{equation*}
+        \|x\|=|x_0|+\|x\|_{\mathrm{p-var}}
+    \end{equation*}
+    とすると, $\|\|$ は $C^{p\text{-var}}([0,T],\mathbb{R}^d)$ 上のノルムになり, このノルムのもとで $C^{p\text{-var}}([0,T],\mathbb{R}^d)$
+    はBanach空間となる.
+\end{proposition}
+\begin{proof}
+    まずノルムの公理を確認する. 非負性, 絶対一次性および三角不等式は,
+    $|x_0|$ がノルムであることと \Cref{prop:pvar-seminorm} から従う.
+    また $\|x\|=0$ とすると, $x_0=0$ かつ
+    $\|x\|_{\mathrm{p-var}}=0$ である. 任意の $t\in[0,T]$ に対し,
+    $0$ と $t$ を含む分割をとれば
+    \begin{equation*}
+        |x_t-x_0|\leq \|x\|_{\mathrm{p-var}}=0
+    \end{equation*}
+    となるので, $x_t=x_0=0$ である. したがって $x=0$ であり,
+    $\|\cdot\|$ はノルムである.
+
+    次に完備性を示す. $(x^{(k)})_{k\geq1}$ をこのノルムに関する
+    Cauchy 列とする. 任意の $s,t\in[0,T]$ に対して
+    \begin{equation*}
+        |x_t^{(k)}-x_t^{(\ell)}|
+        \leq |x_0^{(k)}-x_0^{(\ell)}|
+        +\|x^{(k)}-x^{(\ell)}\|_{\mathrm{p-var}}
+        =\|x^{(k)}-x^{(\ell)}\|
+    \end{equation*}
+    である. よって $(x^{(k)})_{k\geq1}$ は sup ノルムに関しても
+    Cauchy 列である. $C([0,T],\mathbb{R}^d)$ の完備性より,
+    ある $x\in C([0,T],\mathbb{R}^d)$ が存在して $x^{(k)}\to x$ が一様に成り立つ.
+
+    $\varepsilon>0$ を任意にとる. Cauchy 性より, ある $N$ が存在して,
+    $k,\ell\geq N$ ならば
+    \begin{equation*}
+        \|x^{(k)}-x^{(\ell)}\|<\varepsilon
+    \end{equation*}
+    である. $k\geq N$ を固定し,
+    $\pi=\{0=t_0<t_1<\cdots<t_n=T\}$ を任意の分割とする.
+    $\ell\to\infty$ とすると, 一様収束と和の有限性から
+    \begin{align*}
+        &|x_0^{(k)}-x_0|
+        +\left(\sum_{i=1}^n
+        |(x_{t_i}^{(k)}-x_{t_i})-(x_{t_{i-1}}^{(k)}-x_{t_{i-1}})|^p
+        \right)^{1/p}\\
+        &=\lim_{\ell\to\infty}\left\{
+        |x_0^{(k)}-x_0^{(\ell)}|
+        +\left(\sum_{i=1}^n
+        |(x_{t_i}^{(k)}-x_{t_i}^{(\ell)})
+        -(x_{t_{i-1}}^{(k)}-x_{t_{i-1}}^{(\ell)})|^p
+        \right)^{1/p}\right\}\\
+        &\leq \varepsilon.
+    \end{align*}
+    この不等式は任意の分割 $\pi$ に対して成り立つので,
+    分割について上限をとると
+    \begin{equation*}
+        \|x^{(k)}-x\|
+        =|x_0^{(k)}-x_0|+\|x^{(k)}-x\|_{\mathrm{p-var}}
+        \leq\varepsilon
+    \end{equation*}
+    を得る. 特に $x^{(k)}-x$ は有限 $p$ 次変動をもつため,
+    $x\in C^{p\text{-var}}([0,T],\mathbb{R}^d)$ である. また $x^{(k)}\to x$ は
+    $\|\cdot\|$ に関して成り立つ. したがって,
+    $C^{p\text{-var}}([0,T],\mathbb{R}^d)$ は完備である.
+\end{proof}
+\begin{proposition}
+    $1\leqq p<p^\prime$ のとき, 
+    \begin{equation*}
+        C^{p\text{-var}}([0,T],\mathbb{R}^d)\subset C^{p^\prime\text{-var}}([0,T],\mathbb{R}^d)
+    \end{equation*}
+    となる.
+\end{proposition}
+\begin{proof}
+    $x\in C^{p\text{-var}}([0,T],\mathbb{R}^d)$ とし,
+    $\pi=\{0=t_0<t_1<\cdots<t_n=T\}$ を任意の分割とする.
+    各 $i=1,\ldots,n$ に対して,
+    \begin{equation*}
+        |x_{t_i}-x_{t_{i-1}}|
+        \leq
+        \left(\sum_{j=1}^n|x_{t_j}-x_{t_{j-1}}|^p\right)^{1/p}
+        \leq \|x\|_{\mathrm{p-var}}
+    \end{equation*}
+    が成り立つ. したがって, $p'-p>0$ に注意すると,
+    \begin{align*}
+        \sum_{i=1}^n|x_{t_i}-x_{t_{i-1}}|^{p'}
+        &=\sum_{i=1}^n
+        |x_{t_i}-x_{t_{i-1}}|^{p'-p}
+        |x_{t_i}-x_{t_{i-1}}|^p\\
+        &\leq
+        \|x\|_{\mathrm{p-var}}^{p'-p}
+        \sum_{i=1}^n|x_{t_i}-x_{t_{i-1}}|^p\\
+        &\leq \|x\|_{\mathrm{p-var}}^{p'}.
+    \end{align*}
+    両辺の $p'$ 乗根をとり, さらに分割 $\pi$ について上限をとると,
+    \begin{equation*}
+        \|x\|_{\mathrm{p'\text{-var}}}
+        \leq \|x\|_{\mathrm{p-var}}<\infty.
+    \end{equation*}
+    よって $x\in C^{p'\text{-var}}([0,T],\mathbb{R}^d)$ であり,
+    求める包含関係が従う.
+\end{proof}
+\begin{proposition}
+    \label{prop:pvar-nonseparable}
+    $C^{p\text{-var}}([0,T],\mathbb{R}^d)$ は可分でない
+\end{proposition}
+この命題の証明は Appendix~\ref{app:pvar-nonseparability} に与える. この命題により, 一般には $x\in C^{p\text{-var}}([0,T],\mathbb{R}^d)$ は折れ線近似
+ができないことがわかる. しかし, 位相を少し弱めることで折れ線近似が収束するようにできる.
+\begin{proposition}
+    $1\leqq p<\infty$ とする. $\pi\in\Pi, x\in C^{p\text{-var}}([0,T],\mathbb{R}^d)$ に対して, $\pi$ 関して $x$ を折れ線近似した関数を $x(\pi)$ とかく.
+    この時, $x\mapsto x(\pi)$ は $\Pi$ に関して一様有界である. 
+    さらに, 任意の $\epsilon>0$ に対して, 
+    \begin{equation*}
+        \lim_{|\pi|\downarrow 0}\|x(\pi)-x\|_{(p+\epsilon)\text{-var}}=0
+    \end{equation*}
+    となる.
+\end{proposition}
+
+
+
+
+
+
+\begin{thebibliography}{99}
+
+\bibitem[Anderson(1982)]{anderson1982reverse}
+B. D. O. Anderson.
+\newblock Reverse-time diffusion equation models.
+\newblock \emph{Stochastic Processes and their Applications}, 12(3):313--326, 1982.
+
+\bibitem[Arsenyan et al.(2025)Arsenyan, Vardanyan, and Dalalyan]{arsenyan2025assessing}
+V. Arsenyan, E. Vardanyan, and A. S. Dalalyan.
+\newblock Assessing the quality of denoising diffusion models in Wasserstein distance: noisy score and optimal bounds.
+\newblock In \emph{Advances in Neural Information Processing Systems 38}, 2025.
+
+\bibitem[Azangulov et al.(2024)Azangulov, Deligiannidis, and Rousseau]{azangulov2024manifold}
+I. Azangulov, G. Deligiannidis, and J. Rousseau.
+\newblock Convergence of diffusion models under the manifold hypothesis in high dimensions.
+\newblock arXiv:2409.18804, 2024.
+
+\bibitem[Benton et al.(2024)Benton, De Bortoli, Doucet, and Deligiannidis]{benton2024nearly}
+J. Benton, V. De Bortoli, A. Doucet, and G. Deligiannidis.
+\newblock Nearly $d$-linear convergence bounds for diffusion models via stochastic localization.
+\newblock In \emph{International Conference on Learning Representations}, 2024.
+
+\bibitem[Beyler and Bach(2025)]{beyler2025convergence}
+E. Beyler and F. Bach.
+\newblock Convergence of deterministic and stochastic diffusion-model samplers: a simple analysis in Wasserstein distance.
+\newblock arXiv:2508.03210, 2025.
+
+\bibitem[Bruno and Sabanis(2025)]{bruno2025wasserstein}
+S. Bruno and S. Sabanis.
+\newblock Wasserstein convergence of score-based generative models under semiconvexity and discontinuous gradients.
+\newblock \emph{Transactions on Machine Learning Research}, 2025.
+
+\bibitem[Chen et al.(2023a)Chen, Chewi, Li, Li, Salim, and Zhang]{chen2023sampling}
+S. Chen, S. Chewi, J. Li, Y. Li, A. Salim, and A. R. Zhang.
+\newblock Sampling is as easy as learning the score: theory for diffusion models with minimal data assumptions.
+\newblock In \emph{International Conference on Learning Representations}, 2023a.
+
+\bibitem[Chen et al.(2023b)Chen, Lee, and Lu]{chen2023improved}
+H. Chen, H. Lee, and J. Lu.
+\newblock Improved analysis of score-based generative modeling: user-friendly bounds under minimal smoothness assumptions.
+\newblock In \emph{Proceedings of the 40th International Conference on Machine Learning}, 2023b.
+
+\bibitem[Cover and Thomas(2006)]{cover2006elements}
+T. M. Cover and J. A. Thomas.
+\newblock \emph{Elements of Information Theory}.
+\newblock Wiley-Interscience, second edition, 2006.
+
+\bibitem[Efron(2011)]{efron2011tweedie}
+B. Efron.
+\newblock Tweedie's formula and selection bias.
+\newblock \emph{Journal of the American Statistical Association}, 106(496):1602--1614, 2011.
+
+\bibitem[Gao et al.(2025)Gao, Nguyen, and Zhu]{gao2025wasserstein}
+X. Gao, H. M. Nguyen, and L. Zhu.
+\newblock Wasserstein convergence guarantees for a general class of score-based generative models.
+\newblock \emph{Journal of Machine Learning Research}, 26(43):1--54, 2025.
+
+\bibitem[Gentiloni Silveri and Ocello(2025)]{gentiloni2025beyond}
+M. Gentiloni Silveri and A. Ocello.
+\newblock Beyond log-concavity and score regularity: improved convergence bounds for score-based generative models in $W_2$-distance.
+\newblock In \emph{Proceedings of the 42nd International Conference on Machine Learning}, volume 267 of \emph{Proceedings of Machine Learning Research}, pages 55631--55656, 2025.
+
+% ===== PDF p.27 (approx.) | References (continued) =====
+\bibitem[Guo et al.(2005)Guo, Shamai, and Verd\'u]{guo2005mutual}
+D. Guo, S. Shamai, and S. Verd\'u.
+\newblock Mutual information and minimum mean-square error in Gaussian channels.
+\newblock \emph{IEEE Transactions on Information Theory}, 51(4):1261--1282, 2005.
+
+\bibitem[Heusel et al.(2017)Heusel, Ramsauer, Unterthiner, Nessler, and Hochreiter]{heusel2017gans}
+M. Heusel, H. Ramsauer, T. Unterthiner, B. Nessler, and S. Hochreiter.
+\newblock GANs trained by a two time-scale update rule converge to a local Nash equilibrium.
+\newblock In \emph{Advances in Neural Information Processing Systems 30}, 2017.
+
+\bibitem[Haussmann and Pardoux(1986)]{haussmann1986time}
+U. G. Haussmann and E. Pardoux.
+\newblock Time reversal of diffusions.
+\newblock \emph{The Annals of Probability}, 14(4):1188--1205, 1986.
+
+\bibitem[Ho et al.(2020)Ho, Jain, and Abbeel]{ho2020ddpm}
+J. Ho, A. Jain, and P. Abbeel.
+\newblock Denoising diffusion probabilistic models.
+\newblock In \emph{Advances in Neural Information Processing Systems 33}, pages 6840--6851, 2020.
+
+\bibitem[Huang et al.(2026)Huang, Wei, and Chen]{huang2026optimal}
+Z. Huang, Y. Wei, and Y. Chen.
+\newblock Denoising diffusion probabilistic models are optimally adaptive to unknown low dimensionality.
+\newblock arXiv:2410.18784, originally posted 2024; revised 2026.
+
+\bibitem[Karatzas and Shreve(1998)]{karatzas1998brownian}
+I. Karatzas and S. E. Shreve.
+\newblock \emph{Brownian Motion and Stochastic Calculus}.
+\newblock Springer, New York, second edition, 1998.
+
+\bibitem[Koike(2026a)]{koike2026follmer}
+Y. Koike.
+\newblock A note on connections between the F\"ollmer process and the denoising diffusion probabilistic model.
+\newblock arXiv:2605.18040, 2026.
+
+\bibitem[Koike(2026b)]{koike2026wasserstein}
+Y. Koike.
+\newblock Wasserstein bounds for denoising diffusion probabilistic models via the F\"ollmer process.
+\newblock arXiv:2605.18069, 2026.
+
+\bibitem[Li and Yan(2024)]{li2024adapting}
+G. Li and Y. Yan.
+\newblock Adapting to unknown low-dimensional structures in score-based diffusion models.
+\newblock In \emph{Advances in Neural Information Processing Systems 37}, 2024.
+
+\bibitem[Li and Yan(2025)]{li2025od}
+G. Li and Y. Yan.
+\newblock $O(d/T)$ convergence theory for diffusion probabilistic models under minimal assumptions.
+\newblock \emph{Journal of Machine Learning Research}, 26:1--55, 2025.
+
+\bibitem[Liang et al.(2025)Liang, Huang, and Chen]{liang2025lowdimtv}
+J. Liang, Z. Huang, and Y. Chen.
+\newblock Low-dimensional adaptation of diffusion models: convergence in total variation.
+\newblock arXiv:2501.12982, accepted at the Conference on Learning Theory, 2025; revised 2026.
+
+\bibitem[Potaptchik et al.(2024)Potaptchik, Azangulov, and Deligiannidis]{potaptchik2024linear}
+P. Potaptchik, I. Azangulov, and G. Deligiannidis.
+\newblock Linear convergence of diffusion models under the manifold hypothesis.
+\newblock arXiv:2410.09046, 2024.
+
+\bibitem[Pope et al.(2021)Pope, Zhu, Abdelkader, Goldblum, and Goldstein]{pope2021intrinsic}
+P. Pope, C. Zhu, A. Abdelkader, M. Goldblum, and T. Goldstein.
+\newblock The intrinsic dimension of images and its impact on learning.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+
+\bibitem[Song et al.(2021)Song, Sohl-Dickstein, Kingma, Kumar, Ermon, and Poole]{song2021score}
+Y. Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar, S. Ermon, and B. Poole.
+\newblock Score-based generative modeling through stochastic differential equations.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+
+\bibitem[Yu and Yu(2025)]{yu2025advancing}
+Y. Yu and L. Yu.
+\newblock Advancing Wasserstein convergence analysis of score-based models: insights from discretization and second-order acceleration.
+\newblock In \emph{Advances in Neural Information Processing Systems 38}, 2025.
+
+\bibitem[Villani(2009)]{villani2009optimal}
+C. Villani.
+\newblock \emph{Optimal Transport: Old and New}.
+\newblock Grundlehren der mathematischen Wissenschaften, volume 338.
+Springer, Berlin, Heidelberg, 2009.
+
+\bibitem[Wainwright(2019)]{wainwright2019high}
+M. J. Wainwright.
+\newblock \emph{High-Dimensional Statistics: A Non-Asymptotic
+Viewpoint}.
+\newblock Cambridge University Press, Cambridge, 2019.
+
+\end{thebibliography}
+
+\clearpage
+\appendix
+\section{$l^p$ 空間における Minkowski の不等式}
+\label{app:lp-inequalities}
+
+Minkowski の不等式を示すため, まず有限列に対する H\"older の不等式を確認する.
+
+\begin{lemma}[H\"older の不等式]
+    \label{lem:holder-finite}
+    $1<p<\infty$ とし, $q=p/(p-1)$ とおく. 任意の実数列
+    $(a_i)_{i=1}^n,(b_i)_{i=1}^n$ に対して,
+    \begin{equation*}
+        \sum_{i=1}^n |a_i b_i|
+        \leq
+        \left(\sum_{i=1}^n|a_i|^p\right)^{1/p}
+        \left(\sum_{i=1}^n|b_i|^q\right)^{1/q}
+    \end{equation*}
+    が成り立つ.
+\end{lemma}
+\begin{proof}
+    $\left(\sum_{i=1}^n|a_i|^p\right)^{1/p}=0$ または
+    $\left(\sum_{i=1}^n|b_i|^q\right)^{1/q}=0$ のときは明らかなので,
+    以下ではどちらも正であるとする. Young の不等式
+    \begin{equation*}
+        uv\leq \frac{u^p}{p}+\frac{v^q}{q}
+        \qquad (u,v\geq0)
+    \end{equation*}
+    を
+    \begin{equation*}
+        u=\frac{|a_i|}{\left(\sum_{j=1}^n|a_j|^p\right)^{1/p}},
+        \qquad
+        v=\frac{|b_i|}{\left(\sum_{j=1}^n|b_j|^q\right)^{1/q}}
+    \end{equation*}
+    に適用して $i$ について和をとると,
+    \begin{align*}
+        &\frac{\displaystyle\sum_{i=1}^n|a_i b_i|}
+        {\displaystyle
+        \left(\sum_{i=1}^n|a_i|^p\right)^{1/p}
+        \left(\sum_{i=1}^n|b_i|^q\right)^{1/q}}\\
+        &\leq
+        \frac{1}{p\sum_{i=1}^n|a_i|^p}\sum_{i=1}^n|a_i|^p
+        +\frac{1}{q\sum_{i=1}^n|b_i|^q}\sum_{i=1}^n|b_i|^q\\
+        &=\frac1p+\frac1q=1.
+    \end{align*}
+    両辺に分母を掛ければ結論を得る.
+\end{proof}
+
+\begin{proposition}[$\ell^p$ 空間における Minkowski の不等式]
+    \label{prop:minkowski-lp}
+    $1\leq p<\infty$ とする. 任意の
+    $u_1,\ldots,u_n,v_1,\ldots,v_n\in\mathbb{R}^d$ に対して,
+    \begin{equation*}
+        \left(\sum_{i=1}^n|u_i+v_i|^p\right)^{1/p}
+        \leq
+        \left(\sum_{i=1}^n|u_i|^p\right)^{1/p}
+        +
+        \left(\sum_{i=1}^n|v_i|^p\right)^{1/p}
+    \end{equation*}
+    が成り立つ.
+\end{proposition}
+\begin{proof}
+    $p=1$ のときは, $\mathbb{R}^d$ の三角不等式から
+    \begin{equation*}
+        \sum_{i=1}^n|u_i+v_i|
+        \leq \sum_{i=1}^n|u_i|+\sum_{i=1}^n|v_i|
+    \end{equation*}
+    である.
+
+    以下, $1<p<\infty$ とし, $q=p/(p-1)$ とおく. また,
+    \begin{equation*}
+        S:=\left(\sum_{i=1}^n|u_i+v_i|^p\right)^{1/p}
+    \end{equation*}
+    とおく. $S=0$ のときは明らかなので, $S>0$ とする.
+    $w_i:=|u_i+v_i|$ とおくと, $\mathbb{R}^d$ の三角不等式と
+    \Cref{lem:holder-finite} より,
+    \begin{align*}
+        S^p
+        &=\sum_{i=1}^n w_i^p\\
+        &\leq \sum_{i=1}^n |u_i|w_i^{p-1}
+              +\sum_{i=1}^n |v_i|w_i^{p-1}\\
+        &\leq
+        \left\{
+        \left(\sum_{i=1}^n|u_i|^p\right)^{1/p}
+        +
+        \left(\sum_{i=1}^n|v_i|^p\right)^{1/p}
+        \right\}
+        \left(\sum_{i=1}^n w_i^{(p-1)q}\right)^{1/q}\\
+        &=
+        \left\{
+        \left(\sum_{i=1}^n|u_i|^p\right)^{1/p}
+        +
+        \left(\sum_{i=1}^n|v_i|^p\right)^{1/p}
+        \right\}S^{p-1}.
+    \end{align*}
+    最後の等式では $(p-1)q=p$ を用いた. $S^{p-1}>0$ で両辺を割れば,
+    求める不等式を得る.
+\end{proof}
+
+\section{有限 \texorpdfstring{$p$}{p} 次変動路空間の非可分性}
+\label{app:pvar-nonseparability}
+
+\begin{proof}[Proposition~\ref{prop:pvar-nonseparable} の証明]
+    まず $p>1$ の場合を考える. $\varphi:\mathbb{R}\to[0,1/2]$ を
+    \begin{equation*}
+        \varphi(u):=\operatorname{dist}(u,\mathbb{Z})
+    \end{equation*}
+    とおく. これは周期 $1$ の Lipschitz 連続関数である.
+    各二進列 $\sigma=(\sigma_n)_{n\geq0}\in\{0,1\}^{\mathbb{N}}$ に対し,
+    \begin{equation*}
+        f^\sigma(t)
+        :=\sum_{n=0}^\infty
+        \sigma_n2^{-n/p}\varphi\!\left(\frac{2^nt}{T}\right),
+        \qquad 0\leq t\leq T,
+    \end{equation*}
+    と定義する. この級数は一様収束するので $f^\sigma$ は連続である.
+
+    実際, $h=|t-s|/T$ とおき, $0<h\leq1$ に対して
+    $2^{-(N+1)}<h\leq2^{-N}$ となる $N\geq0$ をとる. $\varphi$ の
+    Lipschitz 連続性と $0\leq\varphi\leq1/2$ より,
+    \begin{align*}
+        |f^\sigma(t)-f^\sigma(s)|
+        &\leq
+        h\sum_{n=0}^N2^{n(1-1/p)}
+        +\frac12\sum_{n=N+1}^\infty2^{-n/p}\\
+        &\leq C_p h^{1/p}
+    \end{align*}
+    を満たす定数 $C_p<\infty$ が存在する. よって任意の分割
+    $\pi=\{0=t_0<\cdots<t_m=T\}$ に対し,
+    \begin{equation*}
+        \sum_{i=1}^m|f^\sigma(t_i)-f^\sigma(t_{i-1})|^p
+        \leq \frac{C_p^p}{T}\sum_{i=1}^m(t_i-t_{i-1})
+        =C_p^p.
+    \end{equation*}
+    したがって $f^\sigma\in C^{p\text{-var}}([0,T],\mathbb{R})$ である.
+
+    $\sigma\neq\tau$ とし,
+    \begin{equation*}
+        N:=\min\{n\geq0:\sigma_n\neq\tau_n\}
+    \end{equation*}
+    とおく. 分割 $t_k=kT/2^{N+1}$, $k=0,\ldots,2^{N+1}$ を考える.
+    $n<N$ の項は $\sigma_n=\tau_n$ により打ち消し合い, $n>N$ の項は
+    $\varphi(2^nt_k/T)=0$ となる. また $n=N$ の項は $k$ が偶数のとき $0$,
+    奇数のとき $\pm2^{-N/p-1}$ である. したがって,
+    \begin{align*}
+        \|f^\sigma-f^\tau\|_{\mathrm{p-var}}^p
+        &\geq
+        \sum_{k=1}^{2^{N+1}}
+        |(f^\sigma-f^\tau)(t_k)-(f^\sigma-f^\tau)(t_{k-1})|^p\\
+        &=2^{N+1}\left(2^{-N/p-1}\right)^p
+        =2^{1-p}.
+    \end{align*}
+    よって
+    \begin{equation*}
+        \|f^\sigma-f^\tau\|_{\mathrm{p-var}}
+        \geq 2^{1/p-1}.
+    \end{equation*}
+    $\{0,1\}^{\mathbb{N}}$ は非可算であるから,
+    $C^{p\text{-var}}([0,T],\mathbb{R})$ は一定の正の距離以上離れた
+    非可算部分集合をもつ.
+
+    次に $p=1$ の場合を考える. $\Omega=\{0,1\}^{\mathbb{N}}$ とし,
+    $0<\theta<1$ に対して $\mathbb{P}_\theta$ を, 各座標が Bernoulli 分布
+    \begin{equation*}
+        \mathbb{P}_\theta(\omega_n=1)=\theta
+    \end{equation*}
+    に従う独立同分布な積測度とする. Cantor 符号化
+    \begin{equation*}
+        \kappa(\omega):=T\sum_{n=1}^\infty\frac{2\omega_n}{3^n}
+    \end{equation*}
+    による $\mathbb{P}_\theta$ の像測度を $\mu_\theta$ とし,
+    \begin{equation*}
+        F_\theta(t):=\mu_\theta([0,t]),
+        \qquad 0\leq t\leq T,
+    \end{equation*}
+    とおく. $\mu_\theta$ は原子をもたないため $F_\theta$ は連続な単調非減少関数であり,
+    $F_\theta\in C^{1\text{-var}}([0,T],\mathbb{R})$ である.
+
+    $\theta\neq\eta$ とする. 大数の強法則より,
+    \begin{equation*}
+        E_\theta:=\left\{\omega\in\Omega:
+        \lim_{n\to\infty}\frac1n\sum_{k=1}^n\omega_k=\theta\right\}
+    \end{equation*}
+    とおくと, $\mathbb{P}_\theta(E_\theta)=1$ かつ
+    $\mathbb{P}_\eta(E_\theta)=0$ である. よって $\mu_\theta$ と $\mu_\eta$ は互いに特異であり,
+    \begin{equation*}
+        \|F_\theta-F_\eta\|_{\mathrm{1-var}}
+        =|\mu_\theta-\mu_\eta|([0,T])=2.
+    \end{equation*}
+    したがって $p=1$ の場合にも非可算な $2$-分離集合
+    $\{F_\theta:0<\theta<1\}$ が存在する.
+
+    最後に, 実数値関数を $\mathbb{R}^d$ の第一座標に埋め込めば,
+    上の分離集合は $C^{p\text{-var}}([0,T],\mathbb{R}^d)$ の分離集合とみなせる.
+    一方, 可分距離空間の任意の一様分離部分集合は高々可算である.
+    ゆえに $C^{p\text{-var}}([0,T],\mathbb{R}^d)$ は可分でない.
+\end{proof}
+
+
+\end{document}
