@@ -1,0 +1,353 @@
+% !TeX program = lualatex
+\documentclass[11pt]{article}
+
+\usepackage[haranoaji]{luatexja-preset}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage[authoryear,round]{natbib}
+\setcitestyle{authoryear,open={(},close={)},aysep={ },citesep={; }}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\crefname{assumption}{Assumption}{Assumptions}
+\Crefname{assumption}{Assumption}{Assumptions}
+\crefname{lemma}{Lemma}{Lemmas}
+\Crefname{lemma}{Lemma}{Lemmas}
+\crefname{proposition}{Proposition}{Propositions}
+\Crefname{proposition}{Proposition}{Propositions}
+\crefname{remark}{Remark}{Remarks}
+\Crefname{remark}{Remark}{Remarks}
+\crefname{definition}{Definition}{Definitions}
+\Crefname{definition}{Definition}{Definitions}
+
+\newtheoremstyle{breakstyle}
+  {3pt}        % Space above
+  {3pt}        % Space below
+  {\normalfont}% Body font
+  {}           % Indent amount
+  {\bfseries}  % Head font
+  {.}          % Punctuation after head
+  {\newline}   % Line break after head
+  {}           % Head specification
+
+\theoremstyle{breakstyle}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Pp}{\mathbb{P}}
+\newcommand{\Law}{\mathcal{L}}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\Id}{I_d}
+\newcommand{\pdata}{p_{\mathrm{data}}}
+\newcommand{\Wtwo}{W_2}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert_2}
+\newcommand{\ip}[2]{\left\langle #1,#2\right\rangle}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\TV}{\operatorname{TV}}
+\newcommand{\scoreerr}{\varepsilon_{\mathrm{score}}}
+\newcommand{\dd}{\,\mathrm{d}}
+\newcommand{\lesssimc}{\lesssim}
+\newcommand{\ind}[1]{\mathbf{1}_{#1}}
+
+\title{stochastic localization}
+\author{枇榔一真}
+
+\begin{document}
+% ===== PDF page map (current 27-page build; approximate) =====
+% Page breaks in this article are automatic, so the markers below may move
+% after substantial edits. Rebuild the PDF when updating this map.
+% ===== PDF p.01 (approx.) | Title / Abstract / Introduction =====
+\maketitle
+
+\begin{abstract}
+\end{abstract}
+\section{Introduction}
+本稿では, 高次元における確率測度を扱うための強力な枠組みである, stochastic localizationについて概説する.
+幾何学や偏微分方程式などの分野からの直感に従うと, 次元が上がるにつれ問題は複雑化し, 
+高次元の問題を数学的に考察するのは望みが薄いように感じられる.
+しかし, 近年発展している高次元における理論から, いくつかの重要な確率測度
+のクラスでは, 高次元において良い性質を持つことがわかっている\citep{artsteinavidan2015asymptotic,ledoux2001concentration,vershynin2018highdimensional}.
+
+
+\section{正則条件付き確率}
+確率空間 $(\Omega, \mathcal{F}, P)$ を固定し, $\mathcal{G}$ を $\mathcal{F}$ の部分$\sigma$代数とする.
+このとき, 
+\begin{equation*}
+    P\left(A\,\middle|\,\mathcal{G}\right)
+    :=E\left[\ind{A}\,\middle|\,\mathcal{G}\right]
+    \quad \left(A\in\mathcal{F}\right)
+\end{equation*}
+とすると, adjoint な列 $(A_n)_{n\in\mathbb{N}}\subset \mathcal{F}$ に対して, 
+\begin{align*}
+    P\left(\bigcup_{n=1}^{\infty}A_n\,\middle|\,\mathcal{G}\right)
+    &=E\left[\ind{\bigcup_{n=1}^{\infty}A_n}\,\middle|\,\mathcal{G}\right]\\
+    &=\sum_{n=1}^{\infty}E\left[\ind{A_n}\,\middle|\,\mathcal{G}\right]\\
+    &=\sum_{n=1}^{\infty}P\left(A_n\,\middle|\,\mathcal{G}\right)
+\end{align*}
+が確率1で成り立つ. しかし, disjoint な列 $(A_n)_{n\in\mathbb{N}}\subset \mathcal{F}$ の取り方は非可算無限個存在するため, 
+$P\left(\cdot\middle|\mathcal{G}\right)$ が確率1で確率測度になるかは非自明である.
+しかし, $\Omega$ に仮定を課せばこのような概念を一般化した, 正則条件付き確率を考えることができる.
+\begin{definition}
+    $(S,\mathcal{S})$ を可測空間とし, $X$ を, $S$ に値を取る確率変数とする.
+    このとき, 写像 $\mu: \Omega\times\mathcal{S}\rightarrow[0,1]$ が $\mathcal{G}$ を与えたときの $X$
+    の正則条件付き分布であるとは, 次の2つを満たすときをいう.
+    \begin{enumerate}
+        \item 任意の $A\in\mathcal{S}$ に対して, 
+        \begin{equation*}
+            \mu(\omega,A)=P\left(X\in A\middle|\mathcal{G}\right)(\omega)
+        \end{equation*}
+        がほとんどすべての $\omega$ で成り立つ.
+        \item ほとんどすべての $\omega$ で
+        \begin{equation*}
+            A\mapsto\mu(\omega,A)
+        \end{equation*}
+        は $(S,\mathcal{S})$ 上の確率測度である.
+    \end{enumerate}
+    特に, $S=\Omega$ かつ $X$ が恒等写像である場合, $\mu$ を正則条件付き確率という.
+\end{definition}
+\begin{theorem}
+    $\mu$ は $\mathcal{G}$ を与えたときの $X$ の正則条件付き分布であるとする. このとき, 
+    $E\left[\left|f(X)\right|\right]<\infty$ を満たす実数値可測関数 $f$ に対して, 
+    \begin{equation*}
+        E\left[f(X)\middle|\mathcal{G}\right](\omega)=\int f(x)\mu(\omega,dx)
+    \end{equation*}
+    がほとんどすべての $\omega$ で成立する.
+\end{theorem}
+\begin{proof}
+    $f=\ind{A}$ のときは定義より明らか. 一般の場合も線形性, 単調収束定理から拡張が可能.
+\end{proof}
+\begin{theorem}[\cite{durrett2019probability}]
+    $S$ がPolish空間であるとき, 正則条件付き分布が存在する.
+\end{theorem}
+次に, 確率変数を与えたときの正則条件付き分布について考える.
+$X, Y$ をそれぞれ $(S,\mathcal{S})$ に値を取る確率変数としたとき, ある $\sigma(Y)$ 可測関数 $h$ が存在して, 
+次のように書ける\citep[Theorem~23.2]{jacodprotter2004probability}.
+\begin{equation*}
+    \mathbb{E}\left[X\middle|Y\right]=h(Y)
+\end{equation*}
+このことから, $A\in \mathcal{S}$ に対する条件付き確率 $P\left(X\in A\middle|Y\right)$ においても, ある $\sigma(Y)$ 可測関数 $h_A$ が存在して, 
+\begin{equation*}
+    P\left(X\in A\middle|Y\right)=\mathbb{E}\left[\ind{A}\middle|Y\right]=h_A(Y)
+\end{equation*}
+が成立する.
+ここから, 
+\begin{equation*}
+    \mathbb{E}\left[X\middle|Y=y\right]=h(y), \quad P\left(X\in A\middle|Y=y\right)=h_A(y)
+\end{equation*}
+と書く.
+\section{stochastic localization}
+
+\begin{thebibliography}{9}
+
+\bibitem[Durrett(2019)]{durrett2019probability}
+R. Durrett.
+\newblock
+\href{https://www.cambridge.org/core/books/probability/DD9A1907F810BB14CCFF022CDFC5677A}
+{\emph{Probability: Theory and Examples}}.
+\newblock Fifth edition, Cambridge Series in Statistical and Probabilistic
+Mathematics, volume 49. Cambridge University Press, Cambridge, 2019.
+\newblock \href{https://doi.org/10.1017/9781108591034}
+{doi:10.1017/9781108591034}.
+
+\bibitem[Jacod and Protter(2004)]{jacodprotter2004probability}
+J. Jacod and P. Protter.
+\newblock
+\href{https://doi.org/10.1007/978-3-642-55682-1}
+{\emph{Probability Essentials}}.
+\newblock Second edition, Universitext. Springer, Berlin, Heidelberg, 2004.
+
+\bibitem[Artstein-Avidan et~al.(2015)]{artsteinavidan2015asymptotic}
+S. Artstein-Avidan, A. Giannopoulos, and V. D. Milman.
+\newblock \emph{Asymptotic Geometric Analysis. Part I}.
+\newblock Mathematical Surveys and Monographs, volume 202.
+American Mathematical Society, Providence, RI, 2015.
+
+\bibitem[Ledoux(2001)]{ledoux2001concentration}
+M. Ledoux.
+\newblock \emph{The Concentration of Measure Phenomenon}.
+\newblock Mathematical Surveys and Monographs, volume 89.
+American Mathematical Society, Providence, RI, 2001.
+
+\bibitem[Vershynin(2018)]{vershynin2018highdimensional}
+R. Vershynin.
+\newblock \emph{High-Dimensional Probability: An Introduction with Applications in Data Science}.
+\newblock With a foreword by Sara van de Geer.
+Cambridge Series in Statistical and Probabilistic Mathematics, volume 47.
+Cambridge University Press, Cambridge, 2018.
+
+\end{thebibliography}
+
+\clearpage
+\appendix
+\section{Girsanovの定理}
+\label{app:girsanov}
+以下では確率空間を $(\Omega,\mathcal{F},P)$ とする.
+\subsection{有限次元正規分布の平行移動}
+$d$ を自然数とし, $X$ はd次元標準正規分布に従う確率変数とする.
+$X$ の分布, つまり $(\mathbb{R},\mathcal{B}(\mathbb{R}))$ 上への $X$ の押し出し測度を $P^X$ とする.
+このとき $P^X$ は確率密度関数
+\begin{equation*}
+    p(x)=\left(2\pi\right)^{\frac{-d}{2}}\exp\left(-\frac{1}{2}\|x\|^2\right)
+\end{equation*}
+を持つ. このとき, $a\in \mathbb{R}^d$ に対して $Y=X+a$ とすると, 明らかに $Y$ は平均 $a$ , 分散 $I_d$ の
+正規分布となり, $Y$ の分布 $P^Y$ は次の確率密度関数を持つ.
+\begin{equation*}
+    p_a(x)=\left(2\pi\right)^{\frac{-d}{2}}\exp\left(-\frac{1}{2}\|x-a\|^2\right)
+\end{equation*}
+よって, $P^X$ と $P^Y$ の間には次の関係が成り立つ.
+\begin{align*}
+    \frac{dP^Y}{dP^X}(x)=\frac{p_a(x)}{p(x)}=\exp\left(-\frac{1}{2}\|x-a\|^2+-\frac{1}{2}\|x\|^2\right)=\exp\left(\langle a,x\rangle-\frac{1}{2}\|a\|^2\right)
+\end{align*}
+これにより, 任意の可積分な関数 $F:\mathbb{R}^n\rightarrow\mathbb{R}$ に対して, 
+\begin{equation*}
+    \mathbb{E}\left[F(X+a)\right]=\mathbb{E}\left[F(X)\exp\left(\langle a,X\rangle-\frac{1}{2}\|a\|^2\right)\right]
+\end{equation*}
+が成立する.
+\subsection{ブラウン運動の平行移動}
+$T>0$ とし, ブラウン運動 $W=\{W_t\}_{t\in[0,T]}$ を考える. ここで, $C_0([0,T];\mathbb{R}^d)$ を, 初期値 $0$ の $[0,T]$ 上の連続関数全体の空間
+とし, この空間に $\sup$ ノルムを入れたときの Borel $\sigma$ 代数を $\mathcal{C}$ とする.
+$W$ は $(C_0([0,T];\mathbb{R}^d),\mathcal{C})$ に値を取る確率変数とみなすことができるので, 
+$(C_0([0,T];\mathbb{R}^d),\mathcal{C})$ 上の分布を考えることができる.
+これを $\mu$ と書き, Wiener測度と呼ぶ.
+
+次に, ブラウン運動の平行移動を考える上で都合の良い次の空間を考える.
+\begin{definition}[Cameron-Martin 空間]
+    次のように定義される $C_0([0,T];\mathbb{R}^d)$ の部分空間 $H$ を, Cameron-Martin 空間と呼ぶ.
+    \begin{equation*}
+        H=\left\{h:[0,T]\rightarrow \mathbb{R}^d \middle| h(t)=\int_{0}^{t}g(s)ds, g\in L^2([0,T];\mathbb{R}^d)\right\}
+    \end{equation*}
+    $h\in H$ のノルムを, 
+    \begin{equation*}
+        \|h\|_H:=\left(\int_{0}^{T}\|g(s)\|^2ds\right)^\frac{1}{2}
+    \end{equation*}
+    と定義する.
+\end{definition}
+
+なぜこの空間が都合が良いのかについては後述する. $h\in H$ に対して, $W+h$ の分布を $\mu_h$ と書く. 
+有限次元の場合と同様に, $\mu$ と $\mu_h$ の間の関係について次のような関係が成り立つ.
+\begin{theorem}[Cameron-Martinの公式]
+    \label{thm:cameron-martin-formula}
+    $h\in H$ とし, 
+    \begin{equation*}
+        h(t)=\int_{0}^{t}g(s)ds
+    \end{equation*}
+    とする. このとき, $\mu$ と $\mu_h$ は互いに絶対連続で, 
+    \begin{align*}
+        \frac{d\mu_h}{d\mu}=\exp\left(\sum_{i=1}^{d}\int_{0}^{T}g^i(s)dW^i_s-\frac{1}{2}\|h\|^2_H\right)
+    \end{align*}
+    となる.
+\end{theorem}
+証明は, ギルザノフの定理の証明から従う.
+\begin{corollary}
+    $h\in H$ とする. このとき, 任意の可積分な関数 $F: C([0,T];\mathbb{R}^d)\rightarrow \mathbb{R}$ に対して, 
+    \begin{equation*}
+        \mathbb{E}\left[F(W+h)\right]=\mathbb{E}\left[F(W)\exp\left(\sum_{i=1}^{d}\int_{0}^{T}g^i(s)dW^i_s-\frac{1}{2}\|h\|^2_H\right)\right]
+    \end{equation*}
+\end{corollary}
+\begin{theorem}
+    \label{thm:cameron-martin-characterization}
+    $h\in C([0,T];\mathbb{R}^d)$ とする. ここでは $\mu$ と $\mu_h$ を,
+    それぞれ $W$ と $W+h$ の $C([0,T];\mathbb{R}^d)$ 上の分布とみなす.
+    このとき, $\mu$ と $\mu_h$ が互いに絶対連続であることと, $h\in H$ であることは同値である.
+\end{theorem}
+\begin{proof}
+    $h\in H$ ならば, \Cref{thm:cameron-martin-formula} より
+    $\mu_h\ll\mu$ であり, その Radon--Nikodym 密度は $\mu$-ほとんど至る所で
+    有限かつ正である. したがって $\mu\ll\mu_h$ も成り立つ.
+
+    逆に, $\mu$ と $\mu_h$ が互いに絶対連続であるとする.
+    以下では $\mu_h\ll\mu$ のみを用いて $h\in H$ を示す.
+    集合 $\{w:w(0)=0\}$ の $\mu$-測度は $1$ なので,
+    絶対連続性からその $\mu_h$-測度も $1$ である.
+    一方 $(W+h)(0)=h(0)$ であるから, $h(0)=0$ を得る.
+
+    $\mathcal{S}$ を $[0,T]$ 上の $\mathbb{R}^d$ 値の階段関数全体とする.
+    $u\in\mathcal{S}$ を, ある分割 $0=t_0<t_1<\cdots<t_m=T$ により
+    \[
+        u(s)=\sum_{j=1}^m a_j\ind{(t_{j-1},t_j]}(s),
+        \qquad a_j\in\mathbb{R}^d,
+    \]
+    と表し, 連続路 $w$ に対して
+    \[
+        I_u(w):=\sum_{j=1}^m
+        \langle a_j,w(t_j)-w(t_{j-1})\rangle,
+        \qquad L_h(u):=I_u(h)
+    \]
+    と定める. 分割を細分しても値は変わらないので, $L_h$ は
+    $\mathcal{S}\subset L^2([0,T];\mathbb{R}^d)$ 上の線形汎関数である.
+    また $I_u$ は路の sup ノルムに関して連続であり,
+    ブラウン運動の増分の独立性から
+    \[
+        \E[I_u(W)]=0,\qquad
+        \E[I_u(W)^2]=\sum_{j=1}^m\|a_j\|^2(t_j-t_{j-1})
+        =\|u\|_{L^2}^2.
+    \]
+    平行移動については, 定義から
+    \[
+        I_u(W+h)=I_u(W)+L_h(u)
+    \]
+    が成り立つ.
+
+    ここで $L_h$ が $L^2$ ノルムに関して有界であることを示す.
+    有界でないと仮定すると, 線形性による規格化により
+    \[
+        L_h(u_n)=1,\qquad \|u_n\|_{L^2}\leq\frac1n
+    \]
+    を満たす $u_n\in\mathcal{S}$ が取れる.
+    Chebyshev の不等式より, 任意の $\varepsilon>0$ に対して
+    \[
+        \mu\bigl(\{w:|I_{u_n}(w)|>\varepsilon\}\bigr)
+        \leq\frac{1}{n^2\varepsilon^2}\longrightarrow0.
+    \]
+    有限測度の絶対連続性により, $\mu(A_n)\to0$ ならば
+    $\mu_h(A_n)\to0$ である. 実際, $r=d\mu_h/d\mu\in L^1(\mu)$ とすると,
+    任意の $K>0$ に対して
+    \[
+        \mu_h(A_n)=\int_{A_n}r\,d\mu
+        \leq K\mu(A_n)+\int_{\{r>K\}}r\,d\mu,
+    \]
+    なので, まず $n\to\infty$, 次に $K\to\infty$ とすればよい.
+    したがって $I_{u_n}$ は $\mu_h$ に関して確率収束で $0$ に収束する.
+    しかし $\mu_h$ は $W+h$ の分布であり,
+    \[
+        I_{u_n}(W+h)=I_{u_n}(W)+1
+        \longrightarrow1\qquad\text{in }L^2(P)
+    \]
+    であるから, $I_{u_n}$ は $\mu_h$ に関して確率収束で $1$ にも収束する.
+    これは確率収束の極限の一意性に矛盾する.
+    よって, ある $C<\infty$ が存在して
+    \[
+        |L_h(u)|\leq C\|u\|_{L^2},\qquad u\in\mathcal{S},
+    \]
+    が成り立つ.
+
+    階段関数は $L^2([0,T];\mathbb{R}^d)$ で稠密なので,
+    $L_h$ はこの Hilbert 空間上の有界線形汎関数に一意に拡張される.
+    Riesz の表現定理より, ある $g\in L^2([0,T];\mathbb{R}^d)$ が存在して
+    \[
+        L_h(u)=\int_0^T\langle u(s),g(s)\rangle\,ds
+    \]
+    となる. 標準基底 $e_i$ と $t\in[0,T]$ に対し
+    $u=e_i\ind{(0,t]}$ を代入すると,
+    \[
+        h^i(t)=h^i(t)-h^i(0)
+        =L_h(e_i\ind{(0,t]})=\int_0^t g^i(s)\,ds.
+    \]
+    したがって $h(t)=\int_0^t g(s)\,ds$ であり, 定義より $h\in H$ である.
+\end{proof}
+
+
+\end{document}
